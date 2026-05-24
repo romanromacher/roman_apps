@@ -4,15 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Finanzplaner">
-  <meta name="theme-color" content="#080808">
+  <meta name="theme-color" content="#f5f5f3">
   <link rel="manifest" href="https://romanromacher.github.io/roman_apps/manifest-finanz.json">
   <title>Finanzplaner</title>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #080808; color: #e0e0e0; font-family: 'DM Sans', sans-serif; min-height: 100vh; overscroll-behavior: none; }
+    body { background: #f5f5f3; color: #111111; font-family: 'DM Sans', sans-serif; min-height: 100vh; overscroll-behavior: none; }
     input, select, button { font-family: inherit; }
     input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
     .syne { font-family: 'Syne', sans-serif; }
@@ -21,9 +21,16 @@
     /* SYNC STATUS */
     #sync-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; text-align: center; font-size: 11px; padding: 6px; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 0.1em; transition: all .3s; transform: translateY(-100%); }
     #sync-bar.show { transform: translateY(0); }
-    #sync-bar.saving { background: #1a1a1a; color: #666; }
-    #sync-bar.saved { background: #0a1f12; color: #4ADE80; }
-    #sync-bar.error { background: #1f0a0a; color: #F87171; }
+    #sync-bar.saving { background: #f0f0ee; color: #999; }
+    #sync-bar.saved { background: #e6f9ef; color: #00C853; }
+    #sync-bar.error { background: #fae8e8; color: #E8000D; }
+
+    /* Responsive mobile */
+    @media (max-width: 480px) {
+      body { font-size: 16px; }
+      #app { padding-bottom: env(safe-area-inset-bottom); }
+      input, select, button { font-size: 16px !important; }
+    }
   </style>
 </head>
 <body>
@@ -110,6 +117,10 @@ let state = {
   monthData: Array.from({ length: 12 }, (_, i) => ({ month: i, jobs: [] })),
   loaded: false
 };
+
+// ── Responsive scaling ──
+const isMobile = window.innerWidth <= 480;
+const scale = isMobile ? 1.15 : 1;
 
 // ── Sync ──
 let syncTimer = null;
@@ -199,79 +210,79 @@ function render() {
   const currentJobs = monthData[selectedMonth].jobs;
   const zielErreicht = cur.bestNetto >= ziel;
   const fortschritt = pct(cur.bestNetto, ziel);
-  const pc = fortschritt>=100?'#4ADE80':fortschritt>=60?'#F0E040':'#F87171';
+  const pc = fortschritt>=100?'#00C853':fortschritt>=60?'#F5A800':'#E8000D';
   const jahresSumme = allCalc.reduce((s,m)=>s+m.bestNetto,0);
   const maxBar = Math.max(...allCalc.map(m=>m.bestNetto), ziel);
 
   // HEADER
-  const header = h('div', { style: { padding:'20px 20px 0' }},
+  const header = h('div', { style: { padding: isMobile ? '16px 16px 0' : '20px 20px 0' }},
     h('div', { style: { display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'18px' }},
       h('div', {},
-        h('div', { style: { fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color:'#333', fontFamily:'Syne,sans-serif', marginBottom:'2px' }}, `Freelance Finance ${NOW_YEAR}`),
-        h('div', { style: { fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'18px', color:'#fff' }}, "Roman's Finanzplaner")
+        h('div', { style: { fontSize:'16px', letterSpacing:'0.1em', textTransform:'uppercase', color:'#111', fontFamily:'Syne,sans-serif', marginBottom:'2px' }}, `Freelance Finance ${NOW_YEAR}`),
+        h('div', { style: { fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize: isMobile ? '20px' : '18px', color:'#111' }}, "Roman's Finanzplaner")
       ),
       h('div', { style: { textAlign:'right' }},
-        h('div', { style: { fontSize:'9px', letterSpacing:'0.1em', textTransform:'uppercase', color:'#333', marginBottom:'2px' }}, 'Ziel / Monat'),
-        h('div', { style: { display:'flex', alignItems:'center', gap:'3px' }},
-          h('input', { type:'number', value: ziel, style:{ background:'#141414', border:'1px solid #222', borderRadius:'6px', padding:'2px 7px', color:'#F0E040', fontSize:'17px', fontFamily:'Syne,sans-serif', fontWeight:'800', outline:'none', width:'82px', textAlign:'right' },
+        h('div', { style: { fontSize:'11px', letterSpacing:'0.08em', textTransform:'uppercase', color:'#888', marginBottom:'2px' }}, 'Ziel / Monat'),
+        h('div', { style: { display:'flex', alignItems:'center', gap:'2px', justifyContent:'flex-end' }},
+          h('input', { type:'number', value: ziel, style:{ background:'#f0f0ee', border:'1px solid #ddd', borderRadius:'6px', padding:'2px 6px', color:'#F5A800', fontSize:'13px', fontFamily:'Syne,sans-serif', fontWeight:'800', outline:'none', width:'90px', textAlign:'right' },
             onInput: e => { state.ziel = parseFloat(e.target.value)||0; saveData(); render(); }
           }),
-          h('span', { style:{ color:'#F0E040', fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'17px' }}, '€')
+          h('span', { style:{ color:'#F5A800', fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'13px' }}, '€')
         )
       )
     ),
 
     // MONATSFORTSCHRITT
-    h('div', { style:{ background:'#0d0d0d', border:`1px solid ${pc}20`, borderRadius:'12px', padding:'16px', marginBottom:'10px' }},
+    h('div', { style:{ background:'#ffffff', border:`1px solid ${pc}20`, borderRadius:'12px', padding: isMobile ? '18px' : '16px', marginBottom:'10px' }},
       h('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'12px' }},
-        h('div', { style:{ display:'flex', alignItems:'center', gap:'10px' }},
-          h('button', { style:{ background:'#1a1a1a', border:'1px solid #252525', borderRadius:'6px', cursor:'pointer', color:'#666', fontSize:'14px', width:'28px', height:'28px' },
+        h('div', { style:{ display:'flex', alignItems:'center', gap: isMobile ? '12px' : '10px' }},
+          h('button', { style:{ background:'#e5e5e5', border:'1px solid #ddd', borderRadius:'6px', cursor:'pointer', color:'#111', fontSize:'16px', width:'28px', height:'28px' },
             onClick: () => { state.selectedMonth = Math.max(0, selectedMonth-1); loadMonthIfNeeded(); render(); }}, '‹'),
-          h('span', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'15px', color:'#fff' }}, MONATE_LANG[selectedMonth]),
-          h('button', { style:{ background:'#1a1a1a', border:'1px solid #252525', borderRadius:'6px', cursor:'pointer', color:'#666', fontSize:'14px', width:'28px', height:'28px' },
+          h('span', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'15px', color:'#111' }}, MONATE_LANG[selectedMonth]),
+          h('button', { style:{ background:'#e5e5e5', border:'1px solid #ddd', borderRadius:'6px', cursor:'pointer', color:'#111', fontSize:'16px', width:'28px', height:'28px' },
             onClick: () => { state.selectedMonth = Math.min(11, selectedMonth+1); loadMonthIfNeeded(); render(); }}, '›')
         ),
-        h('span', { style:{ fontSize:'11px', color: zielErreicht?'#4ADE80':'#F87171', fontFamily:'Syne,sans-serif', fontWeight:'700' }},
+        h('span', { style:{ fontSize:'16px', color: zielErreicht?'#00C853':'#E8000D', fontFamily:'Syne,sans-serif', fontWeight:'700' }},
           zielErreicht ? '✓ Ziel erreicht' : `${fmt(ziel - cur.bestNetto)} fehlen`)
       ),
       h('div', { style:{ marginBottom:'10px' }},
-        h('div', { style:{ fontSize:'9px', textTransform:'uppercase', letterSpacing:'0.1em', color:'#444', marginBottom:'4px' }}, 'Umsatz bestätigt (netto)'),
-        h('div', { style:{ display:'flex', alignItems:'baseline', gap:'8px', flexWrap:'wrap' }},
-          h('div', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'32px', color:pc, letterSpacing:'-0.03em', lineHeight:'1' }}, fmt(cur.bestNetto)),
+        h('div', { style:{ fontSize:'13px', textTransform:'uppercase', letterSpacing:'0.1em', color:'#111', marginBottom:'4px' }}, 'Umsatz bestätigt (netto)'),
+        h('div', { style:{ display:'flex', alignItems:'baseline', gap: isMobile ? '10px' : '8px', flexWrap:'wrap' }},
+          h('div', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize: isMobile ? '28px' : '26px', color:pc, letterSpacing:'-0.03em', lineHeight:'1' }}, fmt(cur.bestNetto)),
           h('div', { style:{ display:'flex', alignItems:'baseline', gap:'4px' }},
-            h('span', { style:{ fontSize:'9px', color:'#333', textTransform:'uppercase' }}, 'von'),
-            h('span', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'18px', color:'#F0E040' }}, fmt(ziel))
+            h('span', { style:{ fontSize:'13px', color:'#111', textTransform:'uppercase' }}, 'von'),
+            h('span', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'15px', color:'#F5A800' }}, fmt(ziel))
           )
         )
       ),
-      h('div', { style:{ height:'7px', background:'#161616', borderRadius:'99px', overflow:'hidden', marginBottom:'6px' }},
+      h('div', { style:{ height:'7px', background:'#ebebeb', borderRadius:'99px', overflow:'hidden', marginBottom:'6px' }},
         h('div', { style:{ height:'100%', width:`${fortschritt}%`, background:pc, borderRadius:'99px', transition:'width .4s' }})
       ),
       h('div', { style:{ display:'flex', justifyContent:'space-between' }},
-        h('span', { style:{ fontSize:'10px', color:'#2a2a2a' }}, '0 €'),
-        h('span', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'11px', color:pc }}, `${Math.round(fortschritt)}%`)
+        h('span', { style:{ fontSize:'15px', color:'#888' }}, '0 €'),
+        h('span', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'15px', color:pc }}, `${Math.round(fortschritt)}%`)
       )
     ),
 
     // JAHRESÜBERSICHT
-    h('div', { style:{ background:'#0a0a0a', border:'1px solid #161616', borderRadius:'10px', padding:'12px 14px' }},
+    h('div', { style:{ background:'#f0f0ee', border:'1px solid #e8e8e5', borderRadius:'10px', padding: isMobile ? '14px 16px' : '12px 14px' }},
       h('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'10px' }},
-        h('span', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'700', fontSize:'10px', letterSpacing:'0.12em', textTransform:'uppercase', color:'#383838' }}, `${NOW_YEAR} — Jahresübersicht`),
-        h('span', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'13px', color:'#4ADE80' }}, fmtK(jahresSumme))
+        h('span', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'700', fontSize:'15px', letterSpacing:'0.05em', textTransform:'uppercase', color:'#888888' }}, `${NOW_YEAR} — Jahresübersicht`),
+        h('span', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'16px', color:'#00C853' }}, fmtK(jahresSumme))
       ),
       h('div', { style:{ display:'flex', gap:'3px', alignItems:'flex-end', height:'44px' }},
         ...allCalc.map((m, i) => {
           const bh = maxBar>0?(m.bestNetto/maxBar)*36:0;
           const zh = (ziel/maxBar)*36;
           const isCur = i===selectedMonth;
-          const col = m.bestNetto>=ziel?'#4ADE80':m.bestNetto>0?'#F0E040':'#1c1c1c';
+          const col = m.bestNetto>=ziel?'#00C853':m.bestNetto>0?'#F5A800':'#e0e0dc';
           return h('div', { style:{ flex:'1', display:'flex', flexDirection:'column', alignItems:'center', cursor:'pointer', gap:'3px' },
             onClick: () => { state.selectedMonth = i; loadMonthIfNeeded(); render(); }},
             h('div', { style:{ width:'100%', height:'36px', display:'flex', alignItems:'flex-end', position:'relative' }},
-              h('div', { style:{ position:'absolute', bottom:`${zh}px`, left:'0', right:'0', height:'1px', background:'#F0E04028' }}),
-              h('div', { style:{ width:'100%', height:`${Math.max(bh, m.bestNetto>0?3:2)}px`, background:col, borderRadius:'2px 2px 0 0', opacity: isCur?1:i>NOW_MONTH?0.25:0.55, outline: isCur?`2px solid ${col==='#1c1c1c'?'#333':col}`:'none', outlineOffset:'1px' }})
+              h('div', { style:{ position:'absolute', bottom:`${zh}px`, left:'0', right:'0', height:'1px', background:'#F5A80028' }}),
+              h('div', { style:{ width:'100%', height:`${Math.max(bh, m.bestNetto>0?3:2)}px`, background:col, borderRadius:'2px 2px 0 0', opacity: isCur?1:i>NOW_MONTH?0.25:0.55, outline: isCur?`2px solid ${col==='#e0e0dc'?'#333':col}`:'none', outlineOffset:'1px' }})
             ),
-            h('span', { style:{ fontSize:'7.5px', color: isCur?'#aaa':'#2e2e2e', fontFamily:'Syne,sans-serif', fontWeight: isCur?'800':'400' }}, MONATE[i])
+            h('span', { style:{ fontSize:'11px', color: isCur?'#aaa':'#777777', fontFamily:'Syne,sans-serif', fontWeight: isCur?'800':'400' }}, MONATE[i])
           );
         })
       )
@@ -279,15 +290,12 @@ function render() {
   );
 
   // TABS
-  const tabs = h('div', { style:{ borderBottom:'1px solid #161616', padding:'0 20px', display:'flex', alignItems:'center' }},
+  const tabs = h('div', { style:{ borderBottom:'1px solid #eee', padding: isMobile ? '0 16px' : '0 20px', display:'flex', alignItems:'center' }},
     ...['dashboard','jobs','kosten'].map(t =>
-      h('button', { style:{ background:'none', border:'none', cursor:'pointer', padding:'11px 16px', marginBottom:'-1px', fontFamily:'Syne,sans-serif', fontWeight:'700', fontSize:'11px', letterSpacing:'0.13em', textTransform:'uppercase', color: tab===t?'#F0E040':'#333', borderBottom: tab===t?'2px solid #F0E040':'2px solid transparent' },
+      h('button', { style:{ background:'none', border:'none', cursor:'pointer', padding: isMobile ? '14px 16px' : '11px 16px', marginBottom:'-1px', fontFamily:'Syne,sans-serif', fontWeight:'700', fontSize:'15px', letterSpacing:'0.08em', textTransform:'uppercase', color: tab===t?'#F5A800':'#333', borderBottom: tab===t?'2px solid #F5A800':'2px solid transparent' },
         onClick: () => { state.tab = t; render(); }
       }, t==='dashboard'?'Dashboard':t==='jobs'?'Jobs':'Kosten')
-    ),
-    h('button', { style:{ marginLeft:'auto', background:'#F0E040', border:'none', borderRadius:'6px', cursor:'pointer', color:'#000', fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'10px', padding:'5px 10px', letterSpacing:'0.08em' },
-      onClick: () => saveData()
-    }, '💾 Speichern')
+    )
   );
 
   // CONTENT
@@ -296,86 +304,86 @@ function render() {
   else if (tab === 'jobs') content = renderJobs(currentJobs, cur, selectedMonth);
   else content = renderKosten(kostenBetrieb, kostenPrivat);
 
-  app.append(header, tabs, h('div', { style:{ padding:'16px 20px 80px' }}, content));
+  app.append(header, tabs, h('div', { style:{ padding: isMobile ? '12px 16px 100px' : '16px 20px 80px' }}, content));
 }
 
 function renderDashboard(cur, currentJobs, ziel, steuersatz, pc, zielErreicht, allCalc) {
-  const wrap = h('div', { style:{ display:'flex', flexDirection:'column', gap:'10px' }});
+  const wrap = h('div', { style:{ display:'flex', flexDirection:'column', gap: isMobile ? '12px' : '10px' }});
 
   // 4er grid
-  const grid = h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px' }});
+  const grid = h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap: isMobile ? '10px' : '8px' }});
   [
-    { label:'Umsatz bestätigt', val:cur.bestNetto, color:'#4ADE80', sub:`${currentJobs.filter(j=>j.status==='bestaetigt').length} Jobs · netto zzgl. MwSt.` },
-    { label:'Offen / Pipeline', val:cur.offenNetto, color:'#FB923C', sub:`${currentJobs.filter(j=>j.status!=='bestaetigt').length} Jobs noch offen` },
-    { label:'Einkommensteuer', val:cur.steuer, color:'#F87171', sub:`${steuersatz}% Schätzung` },
-    { label:'Fixkosten / Monat', val:cur.totalKosten, color:'#60A5FA', sub:'betrieblich + privat' },
+    { label:'Umsatz bestätigt', val:cur.bestNetto, color:'#00C853', sub:`${currentJobs.filter(j=>j.status==='bestaetigt').length} Jobs · netto zzgl. MwSt.` },
+    { label:'Offen / Pipeline', val:cur.offenNetto, color:'#F5A800', sub:`${currentJobs.filter(j=>j.status!=='bestaetigt').length} Jobs noch offen` },
+    { label:'Einkommensteuer', val:cur.steuer, color:'#E8000D', sub:`${steuersatz}% Schätzung` },
+    { label:'Fixkosten / Monat', val:cur.totalKosten, color:'#111', sub:'betrieblich + privat' },
   ].forEach(k => grid.append(
-    h('div', { style:{ background:'#0f0f0f', border:`1px solid ${k.color}15`, borderRadius:'10px', padding:'13px 12px' }},
-      h('div', { style:{ fontSize:'9px', textTransform:'uppercase', letterSpacing:'0.1em', color:'#3a3a3a', marginBottom:'5px' }}, k.label),
-      h('div', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'20px', color:k.color }}, fmtK(k.val)),
-      h('div', { style:{ fontSize:'9px', color:'#2e2e2e', marginTop:'3px' }}, k.sub)
+    h('div', { style:{ background:'#ffffff', border:`1px solid ${k.color}15`, borderRadius:'10px', padding: isMobile ? '16px 14px' : '13px 12px' }},
+      h('div', { style:{ fontSize:'13px', textTransform:'uppercase', letterSpacing:'0.1em', color:'#888888', marginBottom:'5px' }}, k.label),
+      h('div', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'16px', color:k.color }}, fmtK(k.val)),
+      h('div', { style:{ fontSize:'13px', color:'#777777', marginTop:'3px' }}, k.sub)
     )
   ));
 
   // MwSt box
-  const mwstBox = h('div', { style:{ background:'#0f0f0f', border:'1px solid #A78BFA18', borderRadius:'10px', padding:'12px 14px' }},
-    h('div', { style:{ fontSize:'9px', textTransform:'uppercase', letterSpacing:'0.1em', color:'#3a3a3a', marginBottom:'6px' }}, 'MwSt.-Übersicht (bestätigte Jobs)'),
-    h('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:'8px' }},
-      h('div', { style:{ fontSize:'11px', color:'#444', display:'flex', gap:'6px', flexWrap:'wrap', alignItems:'center' }},
+  const mwstBox = h('div', { style:{ background:'#ffffff', border:'1px solid #ffffff18', borderRadius:'10px', padding: isMobile ? '14px 16px' : '12px 14px' }},
+    h('div', { style:{ fontSize:'13px', textTransform:'uppercase', letterSpacing:'0.1em', color:'#888888', marginBottom:'6px' }}, 'MwSt.-Übersicht (bestätigte Jobs)'),
+    h('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', gap: isMobile ? '10px' : '8px' }},
+      h('div', { style:{ fontSize:'15px', color:'#111', display:'flex', gap:'6px', flexWrap:'wrap', alignItems:'center' }},
         h('span', {}, `${fmtK(cur.bestNetto)} netto`),
         h('span', {}, '+'),
-        h('span', { style:{ color:'#A78BFA' }}, `${fmtK(cur.mwst)} MwSt.`),
+        h('span', { style:{ color:'#111' }}, `${fmtK(cur.mwst)} MwSt.`),
         h('span', {}, '='),
-        h('span', { style:{ color:'#F0E040' }}, `${fmtK(cur.brutto)} brutto`)
+        h('span', { style:{ color:'#F5A800' }}, `${fmtK(cur.brutto)} brutto`)
       ),
       h('div', { style:{ textAlign:'right', flexShrink:'0' }},
-        h('div', { style:{ fontSize:'9px', color:'#333', textTransform:'uppercase', marginBottom:'2px' }}, 'Abzuführen'),
-        h('div', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'16px', color:'#A78BFA' }}, fmtK(cur.mwst))
+        h('div', { style:{ fontSize:'13px', color:'#111', textTransform:'uppercase', marginBottom:'2px' }}, 'Abzuführen'),
+        h('div', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'16px', color:'#111' }}, fmtK(cur.mwst))
       )
     )
   );
 
   // Ergebnis
-  const ergebnis = h('div', { style:{ background: cur.nachAllem>=0?'#091509':'#150909', border:`1px solid ${cur.nachAllem>=0?'#4ADE8020':'#F8717120'}`, borderRadius:'10px', padding:'14px' }},
-    h('div', { style:{ fontSize:'9px', textTransform:'uppercase', letterSpacing:'0.1em', color:'#383838', marginBottom:'8px' }}, `Was wirklich übrig bleibt · nach ${steuersatz}% Steuer + Fixkosten`),
+  const ergebnis = h('div', { style:{ background: cur.nachAllem>=0?'#091509':'#150909', border:`1px solid ${cur.nachAllem>=0?'#00C85320':'#E8000D20'}`, borderRadius:'10px', padding: isMobile ? '16px' : '14px' }},
+    h('div', { style:{ fontSize:'13px', textTransform:'uppercase', letterSpacing:'0.1em', color:'#888888', marginBottom:'8px' }}, `Was wirklich übrig bleibt · nach ${steuersatz}% Steuer + Fixkosten`),
     h('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center' }},
-      h('span', { style:{ fontSize:'11px', color:'#383838' }}, `${fmtK(cur.marge)} − ${fmtK(cur.steuer)} − ${fmtK(cur.totalKosten)}`),
-      h('span', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'22px', color: cur.nachAllem>=0?'#4ADE80':'#F87171' }}, fmt(cur.nachAllem))
+      h('span', { style:{ fontSize:'16px', color:'#888888' }}, `${fmtK(cur.marge)} − ${fmtK(cur.steuer)} − ${fmtK(cur.totalKosten)}`),
+      h('span', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'22px', color: cur.nachAllem>=0?'#00C853':'#E8000D' }}, fmt(cur.nachAllem))
     )
   );
 
   // Produktionskosten
-  const prodBox = cur.prodK > 0 ? h('div', { style:{ background:'#0f0f0f', border:'1px solid #F8717118', borderRadius:'10px', overflow:'hidden' }},
+  const prodBox = cur.prodK > 0 ? h('div', { style:{ background:'#ffffff', border:'1px solid #E8000D18', borderRadius:'10px', overflow:'hidden' }},
     ...[
-      { label:'Gesamtumsatz (netto)', val:cur.bestNetto, color:'#aaa' },
-      { label:'Produktionskosten', val:`− ${fmt(cur.prodK)}`, color:'#F87171', raw:true },
-      { label:'Deine Marge', val:cur.marge, color:'#4ADE80', bg:'#141414' },
-    ].map(row => h('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 14px', borderBottom:'1px solid #161616', background: row.bg||'transparent' }},
-      h('span', { style:{ fontSize:'9px', textTransform:'uppercase', letterSpacing:'0.1em', color: row.bg?'#888':'#3a3a3a' }}, row.label),
+      { label:'Gesamtumsatz (netto)', val:cur.bestNetto, color:'#111' },
+      { label:'Produktionskosten', val:`− ${fmt(cur.prodK)}`, color:'#E8000D', raw:true },
+      { label:'Deine Marge', val:cur.marge, color:'#00C853', bg:'#141414' },
+    ].map(row => h('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 14px', borderBottom:'1px solid #eee', background: row.bg||'transparent' }},
+      h('span', { style:{ fontSize:'13px', textTransform:'uppercase', letterSpacing:'0.1em', color: row.bg?'#888':'#888888' }}, row.label),
       h('span', { style:{ fontFamily:'Syne,sans-serif', fontWeight: row.bg?'800':'700', fontSize: row.bg?'18px':'14px', color:row.color }}, row.raw ? row.val : fmt(row.val))
     ))
   ) : null;
 
   // Was-wäre-wenn
-  const wwwBox = cur.offenNetto > 0 ? h('div', { style:{ background:'#0f0f0f', border:'1px solid #FB923C15', borderRadius:'10px', padding:'12px 14px' }},
-    h('div', { style:{ fontSize:'9px', textTransform:'uppercase', letterSpacing:'0.1em', color:'#3a3a3a', marginBottom:'6px' }}, 'Wenn alle offenen Jobs bestätigt werden...'),
+  const wwwBox = cur.offenNetto > 0 ? h('div', { style:{ background:'#ffffff', border:'1px solid #F5A80015', borderRadius:'10px', padding: isMobile ? '14px 16px' : '12px 14px' }},
+    h('div', { style:{ fontSize:'13px', textTransform:'uppercase', letterSpacing:'0.1em', color:'#888888', marginBottom:'6px' }}, 'Wenn alle offenen Jobs bestätigt werden...'),
     h('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center' }},
-      h('span', { style:{ fontSize:'12px', color:'#555' }}, `Umsatz wäre ${fmt(cur.bestNetto + cur.offenNetto)}`),
-      h('span', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'13px', color: cur.bestNetto+cur.offenNetto>=ziel?'#4ADE80':'#F0E040' }},
+      h('span', { style:{ fontSize:'15px', color:'#111' }}, `Umsatz wäre ${fmt(cur.bestNetto + cur.offenNetto)}`),
+      h('span', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'15px', color: cur.bestNetto+cur.offenNetto>=ziel?'#00C853':'#F5A800' }},
         cur.bestNetto+cur.offenNetto>=ziel ? '✓ Ziel erreicht' : `noch ${fmt(ziel-cur.bestNetto-cur.offenNetto)} fehlen`)
     )
   ) : null;
 
   // Steuer slider
-  const steuerBox = h('div', { style:{ background:'#0f0f0f', border:'1px solid #1a1a1a', borderRadius:'10px', padding:'14px' }},
+  const steuerBox = h('div', { style:{ background:'#ffffff', border:'1px solid #e0e0dc', borderRadius:'10px', padding: isMobile ? '16px' : '14px' }},
     h('div', { style:{ display:'flex', justifyContent:'space-between', marginBottom:'8px' }},
       h('div', {},
-        h('div', { style:{ fontSize:'12px', color:'#bbb' }}, 'Steuerlast'),
-        h('div', { style:{ fontSize:'10px', color:'#333' }}, 'Einkommensteuer-Schätzung')
+        h('div', { style:{ fontSize:'15px', color:'#111' }}, 'Steuerlast'),
+        h('div', { style:{ fontSize:'14px', color:'#111' }}, 'Einkommensteuer-Schätzung')
       ),
-      h('div', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'16px', color:'#F87171' }}, `${state.steuersatz}%`)
+      h('div', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'16px', color:'#E8000D' }}, `${state.steuersatz}%`)
     ),
-    h('input', { type:'range', min:'15', max:'45', step:'1', value: state.steuersatz, style:{ width:'100%', accentColor:'#F87171', cursor:'pointer' },
+    h('input', { type:'range', min:'15', max:'45', step:'1', value: state.steuersatz, style:{ width:'100%', accentColor:'#E8000D', cursor:'pointer' },
       onInput: e => { state.steuersatz = Number(e.target.value); saveData(); render(); }
     })
   );
@@ -388,23 +396,23 @@ function renderDashboard(cur, currentJobs, ziel, steuersatz, pc, zielErreicht, a
 }
 
 function renderJobs(currentJobs, cur, selectedMonth) {
-  const wrap = h('div', { style:{ display:'flex', flexDirection:'column', gap:'8px' }});
-  wrap.append(h('div', { style:{ fontSize:'11px', color:'#3a3a3a', marginBottom:'2px' }},
+  const wrap = h('div', { style:{ display:'flex', flexDirection:'column', gap: isMobile ? '10px' : '8px' }});
+  wrap.append(h('div', { style:{ fontSize:'16px', color:'#888888', marginBottom:'2px' }},
     currentJobs.length === 0 ? `Noch keine Jobs im ${MONATE_LANG[selectedMonth]}` : `${currentJobs.length} Jobs · ${fmt(cur.bestNetto)} bestätigt · ${fmt(cur.offenNetto)} offen`
   ));
 
   currentJobs.forEach(job => {
-    const statusColor = job.status==='bestaetigt'?'#4ADE80':job.status==='offen'?'#FB923C':'#60A5FA';
-    const card = h('div', { style:{ background:'#0f0f0f', border:`1px solid ${statusColor}15`, borderRadius:'10px', padding:'10px 12px' }});
+    const statusColor = job.status==='bestaetigt'?'#00C853':job.status==='offen'?'#F5A800':'#ffffff';
+    const card = h('div', { style:{ background:'#ffffff', border:`1px solid ${statusColor}15`, borderRadius:'10px', padding:'10px 12px' }});
     const row1 = h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 95px 105px 26px', gap:'6px', alignItems:'center', marginBottom:'4px' }});
 
-    const nameIn = h('input', { value: job.name, style:{ background:'transparent', border:'none', outline:'none', color:'#ddd', fontSize:'13px', minWidth:'0' }});
+    const nameIn = h('input', { value: job.name, style:{ background:'transparent', border:'none', outline:'none', color:'#111', fontSize:'15px', minWidth:'0' }});
     nameIn.addEventListener('input', e => { job.name = e.target.value; saveData(); });
 
-    const betragIn = h('input', { type:'number', value: job.betrag, style:{ background:'#161616', border:'1px solid #222', borderRadius:'5px', padding:'3px 5px', color:'#fff', fontSize:'12px', width:'100%', textAlign:'right', outline:'none' }});
+    const betragIn = h('input', { type:'number', value: job.betrag, style:{ background:'#ebebeb', border:'1px solid #ddd', borderRadius:'5px', padding:'3px 5px', color:'#111', fontSize:'15px', width:'100%', textAlign:'right', outline:'none' }});
     betragIn.addEventListener('input', e => { job.betrag = parseFloat(e.target.value)||0; saveData(); render(); });
 
-    const statusSel = h('select', { style:{ background:'#161616', border:'1px solid #222', borderRadius:'5px', padding:'4px', fontSize:'10px', fontFamily:'Syne,sans-serif', fontWeight:'700', cursor:'pointer', outline:'none', color:statusColor }},
+    const statusSel = h('select', { style:{ background:'#ebebeb', border:'1px solid #ddd', borderRadius:'5px', padding:'4px', fontSize:'14px', fontFamily:'Syne,sans-serif', fontWeight:'700', cursor:'pointer', outline:'none', color:statusColor }},
       h('option', { value:'bestaetigt' }, '✓ Bestätigt'),
       h('option', { value:'offen' }, '◌ Offen'),
       h('option', { value:'anfrage' }, '? Anfrage')
@@ -412,36 +420,36 @@ function renderJobs(currentJobs, cur, selectedMonth) {
     statusSel.value = job.status;
     statusSel.addEventListener('change', e => { job.status = e.target.value; saveData(); render(); });
 
-    const delBtn = h('button', { style:{ background:'none', border:'none', cursor:'pointer', color:'#333', fontSize:'16px' }}, '×');
+    const delBtn = h('button', { style:{ background:'none', border:'none', cursor:'pointer', color:'#111', fontSize:'16px' }}, '×');
     delBtn.addEventListener('click', () => { state.monthData[selectedMonth].jobs = state.monthData[selectedMonth].jobs.filter(j=>j.id!==job.id); saveData(); render(); });
 
-    row1.append(nameIn, h('div', { style:{ display:'flex', alignItems:'center', gap:'3px' }}, betragIn, h('span', { style:{ color:'#444', fontSize:'10px' }}, '€')), statusSel, delBtn);
+    row1.append(nameIn, h('div', { style:{ display:'flex', alignItems:'center', gap:'3px' }}, betragIn, h('span', { style:{ color:'#111', fontSize:'14px' }}, '€')), statusSel, delBtn);
 
     // Produktionskosten
-    const prodRow = h('div', { style:{ display:'flex', alignItems:'center', gap:'6px', paddingTop:'6px', borderTop:'1px solid #1a1a1a' }});
-    const prodIn = h('input', { type:'number', value: job.prodKosten||'', placeholder:'Produktionskosten €', style:{ background:'#161616', border:'1px solid #1e1e1e', borderRadius:'5px', padding:'2px 6px', color:'#F87171', fontSize:'11px', width:'100px', textAlign:'right', outline:'none' }});
+    const prodRow = h('div', { style:{ display:'flex', alignItems:'center', gap:'6px', paddingTop:'6px', borderTop:'1px solid #eee' }});
+    const prodIn = h('input', { type:'number', value: job.prodKosten||'', placeholder:'Produktionskosten €', style:{ background:'#ebebeb', border:'1px solid #e0e0dc', borderRadius:'5px', padding:'2px 6px', color:'#E8000D', fontSize:'16px', width:'100px', textAlign:'right', outline:'none' }});
     prodIn.addEventListener('input', e => { job.prodKosten = parseFloat(e.target.value)||0; saveData(); render(); });
-    prodRow.append(h('span', { style:{ fontSize:'10px', color:'#383838' }}, 'Prod.kosten:'), prodIn, h('span', { style:{ fontSize:'10px', color:'#383838' }}, '€'));
-    if ((job.prodKosten||0) > 0) prodRow.append(h('span', { style:{ fontSize:'10px', color:'#444', marginLeft:'auto' }}, 'Marge: ', h('span', { style:{ color:'#4ADE80', fontFamily:'Syne,sans-serif', fontWeight:'700' }}, fmt(job.betrag-(job.prodKosten||0)))));
+    prodRow.append(h('span', { style:{ fontSize:'14px', color:'#888888' }}, 'Prod.kosten:'), prodIn, h('span', { style:{ fontSize:'14px', color:'#888888' }}, '€'));
+    if ((job.prodKosten||0) > 0) prodRow.append(h('span', { style:{ fontSize:'14px', color:'#111', marginLeft:'auto' }}, 'Marge: ', h('span', { style:{ color:'#00C853', fontFamily:'Syne,sans-serif', fontWeight:'700' }}, fmt(job.betrag-(job.prodKosten||0)))));
 
     card.append(row1, prodRow);
     wrap.append(card);
   });
 
   // Neuer Job
-  const newCard = h('div', { style:{ background:'#0d0d0d', border:'1px dashed #222', borderRadius:'10px', padding:'12px' }});
-  newCard.append(h('div', { style:{ fontSize:'9px', textTransform:'uppercase', letterSpacing:'0.1em', color:'#333', marginBottom:'8px' }}, `+ Job eintragen für ${MONATE_LANG[selectedMonth]}`));
-  const nameIn = h('input', { placeholder:'Projektname / Kunde', style:{ background:'#161616', border:'1px solid #222', borderRadius:'6px', padding:'8px 10px', color:'#ccc', fontSize:'13px', outline:'none', width:'100%', marginBottom:'8px' }});
-  const row2 = h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px', marginBottom:'8px' }});
-  const betragIn = h('input', { type:'number', placeholder:'Umsatz netto €', style:{ background:'#161616', border:'1px solid #222', borderRadius:'6px', padding:'8px 10px', color:'#ccc', fontSize:'13px', outline:'none', width:'100%' }});
-  const prodIn = h('input', { type:'number', placeholder:'Produktionskosten € (optional)', style:{ background:'#161616', border:'1px solid #1e1e1e', borderRadius:'6px', padding:'8px 10px', color:'#F87171', fontSize:'13px', outline:'none', width:'100%' }});
-  const row3 = h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 52px', gap:'8px' }});
-  const statusSel = h('select', { style:{ background:'#161616', border:'1px solid #222', borderRadius:'6px', padding:'8px 5px', color:'#ccc', fontSize:'10px', fontFamily:'Syne,sans-serif', outline:'none', cursor:'pointer' }},
+  const newCard = h('div', { style:{ background:'#ffffff', border:'1px dashed #ccc', borderRadius:'10px', padding:'12px' }});
+  newCard.append(h('div', { style:{ fontSize:'13px', textTransform:'uppercase', letterSpacing:'0.1em', color:'#111', marginBottom:'8px' }}, `+ Job eintragen für ${MONATE_LANG[selectedMonth]}`));
+  const nameIn = h('input', { placeholder:'Projektname / Kunde', style:{ background:'#ebebeb', border:'1px solid #ddd', borderRadius:'6px', padding:'8px 10px', color:'#111', fontSize:'15px', outline:'none', width:'100%', marginBottom:'8px' }});
+  const row2 = h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap: isMobile ? '10px' : '8px', marginBottom:'8px' }});
+  const betragIn = h('input', { type:'number', placeholder:'Umsatz netto €', style:{ background:'#ebebeb', border:'1px solid #ddd', borderRadius:'6px', padding:'8px 10px', color:'#111', fontSize:'15px', outline:'none', width:'100%' }});
+  const prodIn = h('input', { type:'number', placeholder:'Produktionskosten € (optional)', style:{ background:'#ebebeb', border:'1px solid #e0e0dc', borderRadius:'6px', padding:'8px 10px', color:'#E8000D', fontSize:'15px', outline:'none', width:'100%' }});
+  const row3 = h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 52px', gap: isMobile ? '10px' : '8px' }});
+  const statusSel = h('select', { style:{ background:'#ebebeb', border:'1px solid #ddd', borderRadius:'6px', padding:'8px 5px', color:'#111', fontSize:'14px', fontFamily:'Syne,sans-serif', outline:'none', cursor:'pointer' }},
     h('option', { value:'bestaetigt' }, '✓ Bestätigt'),
     h('option', { value:'offen' }, '◌ Offen'),
     h('option', { value:'anfrage' }, '? Anfrage')
   );
-  const addBtn = h('button', { style:{ background:'#F0E040', border:'none', borderRadius:'6px', cursor:'pointer', color:'#000', fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'13px' }}, '+');
+  const addBtn = h('button', { style:{ background:'#F5A800', border:'none', borderRadius:'6px', cursor:'pointer', color:'#000', fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'15px' }}, '+');
   addBtn.addEventListener('click', () => {
     if (!nameIn.value.trim()) return;
     state.monthData[selectedMonth].jobs.push({ id: Date.now(), name: nameIn.value.trim(), betrag: parseFloat(betragIn.value)||0, prodKosten: parseFloat(prodIn.value)||0, status: statusSel.value });
@@ -458,61 +466,61 @@ function renderKosten(kb, kp) {
   const wrap = h('div', { style:{ display:'flex', flexDirection:'column', gap:'14px' }});
 
   const totalAll = [...kb,...kp].reduce((s,i)=>s+i.betrag,0);
-  wrap.append(h('div', { style:{ background:'#0f0f0f', border:'1px solid #1a1a1a', borderRadius:'10px', padding:'12px 14px' }},
+  wrap.append(h('div', { style:{ background:'#ffffff', border:'1px solid #e0e0dc', borderRadius:'10px', padding: isMobile ? '14px 16px' : '12px 14px' }},
     h('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center' }},
       h('div', {},
-        h('div', { style:{ fontSize:'9px', textTransform:'uppercase', letterSpacing:'0.1em', color:'#444' }}, 'Fixkosten gesamt / Monat'),
-        h('div', { style:{ fontSize:'10px', color:'#2e2e2e', marginTop:'2px' }}, 'Gilt automatisch für alle Monate')
+        h('div', { style:{ fontSize:'13px', textTransform:'uppercase', letterSpacing:'0.1em', color:'#111' }}, 'Fixkosten gesamt / Monat'),
+        h('div', { style:{ fontSize:'14px', color:'#777777', marginTop:'2px' }}, 'Gilt automatisch für alle Monate')
       ),
-      h('span', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'16px', color:'#60A5FA' }}, fmt(totalAll))
+      h('span', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'16px', color:'#111' }}, fmt(totalAll))
     )
   ));
 
-  wrap.append(makeKostenBlock('Betriebliche Kosten', kb, '#60A5FA', items => { state.kostenBetrieb = items; saveData(); render(); }));
+  wrap.append(makeKostenBlock('Betriebliche Kosten', kb, '#ffffff', items => { state.kostenBetrieb = items; saveData(); render(); }));
 
   // MwSt summary
   const totalB = kb.reduce((s,i)=>s+i.betrag,0);
   const mwstB = totalB - totalB/1.19;
-  wrap.append(h('div', { style:{ background:'#0a0a0a', border:'1px solid #60A5FA15', borderRadius:'10px', padding:'12px 14px' }},
-    h('div', { style:{ fontSize:'9px', textTransform:'uppercase', letterSpacing:'0.1em', color:'#444', marginBottom:'8px' }}, 'Vorsteuer betriebliche Kosten (19%)'),
+  wrap.append(h('div', { style:{ background:'#f0f0ee', border:'1px solid #ffffff15', borderRadius:'10px', padding: isMobile ? '14px 16px' : '12px 14px' }},
+    h('div', { style:{ fontSize:'13px', textTransform:'uppercase', letterSpacing:'0.1em', color:'#111', marginBottom:'8px' }}, 'Vorsteuer betriebliche Kosten (19%)'),
     ...[
-      { label:'Brutto (was du zahlst)', val:fmt(totalB), color:'#aaa' },
-      { label:'Netto', val:fmt(totalB/1.19), color:'#555' },
-      { label:'MwSt. / Vorsteuer', val:fmt(mwstB), color:'#60A5FA' },
+      { label:'Brutto (was du zahlst)', val:fmt(totalB), color:'#111' },
+      { label:'Netto', val:fmt(totalB/1.19), color:'#111' },
+      { label:'MwSt. / Vorsteuer', val:fmt(mwstB), color:'#111' },
     ].map(row => h('div', { style:{ display:'flex', justifyContent:'space-between', marginBottom:'5px' }},
-      h('span', { style:{ fontSize:'11px', color:'#444' }}, row.label),
-      h('span', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'700', fontSize:'13px', color:row.color }}, row.val)
+      h('span', { style:{ fontSize:'15px', color:'#111' }}, row.label),
+      h('span', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'700', fontSize:'15px', color:row.color }}, row.val)
     )),
-    h('div', { style:{ marginTop:'8px', paddingTop:'8px', borderTop:'1px solid #1a1a1a', fontSize:'10px', color:'#333' }}, `Diese ${fmt(mwstB)} kannst du als Vorsteuer zurückfordern.`)
+    h('div', { style:{ marginTop:'8px', paddingTop:'8px', borderTop:'1px solid #eee', fontSize:'14px', color:'#111' }}, `Diese ${fmt(mwstB)} kannst du als Vorsteuer zurückfordern.`)
   ));
 
-  wrap.append(makeKostenBlock('Private Lebenshaltung', kp, '#A78BFA', items => { state.kostenPrivat = items; saveData(); render(); }));
+  wrap.append(makeKostenBlock('Private Lebenshaltung', kp, '#ffffff', items => { state.kostenPrivat = items; saveData(); render(); }));
   return wrap;
 }
 
 function makeKostenBlock(titel, items, accent, onChange) {
-  const block = h('div', { style:{ background:'#0f0f0f', border:`1px solid ${accent}1a`, borderRadius:'10px' }});
+  const block = h('div', { style:{ background:'#ffffff', border:`1px solid ${accent}1a`, borderRadius:'10px' }});
   const total = items.reduce((s,i)=>s+i.betrag,0);
   block.append(h('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'12px 16px', borderBottom:`1px solid ${accent}18` }},
-    h('span', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'700', fontSize:'11px', letterSpacing:'0.12em', textTransform:'uppercase', color:accent }}, titel),
-    h('span', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'14px', color:accent }}, `${fmt(total)}/Mo`)
+    h('span', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'700', fontSize:'16px', letterSpacing:'0.12em', textTransform:'uppercase', color:accent }}, titel),
+    h('span', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'16px', color:accent }}, `${fmt(total)}/Mo`)
   ));
   items.forEach(item => {
-    const row = h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 80px 28px', gap:'6px', padding:'6px 14px', borderBottom:'1px solid #161616', alignItems:'center' }});
-    const nameIn = h('input', { value: item.name, style:{ background:'transparent', border:'none', outline:'none', color:'#bbb', fontSize:'12px', width:'100%' }});
+    const row = h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 80px 28px', gap:'6px', padding:'6px 14px', borderBottom:'1px solid #eee', alignItems:'center' }});
+    const nameIn = h('input', { value: item.name, style:{ background:'transparent', border:'none', outline:'none', color:'#111', fontSize:'15px', width:'100%' }});
     nameIn.addEventListener('input', e => { item.name = e.target.value; onChange([...items]); });
-    const betragIn = h('input', { type:'number', value: item.betrag, style:{ background:'#1a1a1a', border:'1px solid #252525', borderRadius:'5px', padding:'3px 6px', color:'#fff', fontSize:'12px', width:'100%', textAlign:'right', outline:'none' }});
+    const betragIn = h('input', { type:'number', value: item.betrag, style:{ background:'#e5e5e5', border:'1px solid #ddd', borderRadius:'5px', padding:'3px 6px', color:'#111', fontSize:'15px', width:'100%', textAlign:'right', outline:'none' }});
     betragIn.addEventListener('input', e => { item.betrag = parseFloat(e.target.value)||0; onChange([...items]); });
-    const del = h('button', { style:{ background:'none', border:'none', cursor:'pointer', color:'#333', fontSize:'15px' }}, '×');
+    const del = h('button', { style:{ background:'none', border:'none', cursor:'pointer', color:'#111', fontSize:'15px' }}, '×');
     del.addEventListener('click', () => onChange(items.filter(i=>i.id!==item.id)));
     row.append(nameIn, betragIn, del);
     block.append(row);
   });
   // Neue Zeile
   const addRow = h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 80px 28px', gap:'6px', padding:'8px 14px', alignItems:'center' }});
-  const newName = h('input', { placeholder:'+ Neue Position', style:{ background:'#161616', border:'1px dashed #252525', borderRadius:'5px', padding:'4px 8px', color:'#666', fontSize:'11px', outline:'none' }});
-  const newBetrag = h('input', { type:'number', placeholder:'0', style:{ background:'#161616', border:'1px dashed #252525', borderRadius:'5px', padding:'4px 6px', color:'#666', fontSize:'11px', textAlign:'right', outline:'none' }});
-  const addBtn = h('button', { style:{ background:accent, border:'none', borderRadius:'5px', cursor:'pointer', color:'#000', fontWeight:'800', fontSize:'14px', width:'28px', height:'28px', padding:'0' }}, '+');
+  const newName = h('input', { placeholder:'+ Neue Position', style:{ background:'#ebebeb', border:'1px dashed #ccc', borderRadius:'5px', padding:'4px 8px', color:'#111', fontSize:'16px', outline:'none' }});
+  const newBetrag = h('input', { type:'number', placeholder:'0', style:{ background:'#ebebeb', border:'1px dashed #ccc', borderRadius:'5px', padding:'4px 6px', color:'#111', fontSize:'16px', textAlign:'right', outline:'none' }});
+  const addBtn = h('button', { style:{ background:accent, border:'none', borderRadius:'5px', cursor:'pointer', color:'#000', fontWeight:'800', fontSize:'16px', width:'28px', height:'28px', padding:'0' }}, '+');
   addBtn.addEventListener('click', () => {
     if (!newName.value.trim()) return;
     onChange([...items, { id: Date.now(), name: newName.value.trim(), betrag: parseFloat(newBetrag.value)||0 }]);
