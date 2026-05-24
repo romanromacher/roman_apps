@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Kalkulation">
+  <meta name="theme-color" content="#080808">
+  <link rel="manifest" href="manifest-kalk.json">
+  <title>Kalkulation</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #080808; color: #e0e0e0; font-family: 'DM Sans', sans-serif; min-height: 100vh; overscroll-behavior: none; }
+    input, select, button { font-family: inherit; }
+    input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+    #app { max-width: 720px; margin: 0 auto; }
+    #sync-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; text-align: center; font-size: 11px; padding: 6px; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 0.1em; transition: all .3s; transform: translateY(-100%); }
+    #sync-bar.show { transform: translateY(0); }
+    #sync-bar.saving { background: #1a1a1a; color: #666; }
+    #sync-bar.saved { background: #0a1f12; color: #4ADE80; }
+    #sync-bar.error { background: #1f0a0a; color: #F87171; }
+  </style>
+</head>
+<body>
+<div id="sync-bar">Gespeichert ✓</div>
+<div id="app">Lädt...</div>
+
+<script>
+const SUPABASE_URL = 'https://jzpmwelaalyxohuxrkov.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6cG13ZWxhYWx5eG9odXhya292Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MjUzNTcsImV4cCI6MjA5NTIwMTM1N30.kbeX6AMb24fmtT9SBdpyMont76JypmjcSQtqUDpwWvM';
+const USER_ID = 'roman';
+
+const fmt = n => n.toLocaleString('de-DE', { style:'currency', currency:'EUR', maximumFractionDigits:0 });
+const fmtK = n => { if(n===0) return '0 €'; if(Math.abs(n)>=1000) return (n/1000).toLocaleString('de-DE',{maximumFractionDigits:1})+'k €'; return n.toLocaleString('de-DE',{maximumFractionDigits:0})+' €'; };
+const pct = (v,t) => t===0?0:Math.min(100,v/t*100);
+
+const h = (tag, attrs, ...children) => {
+  const el = document.createElement(tag);
+  if (attrs) Object.entries(attrs).forEach(([k,v]) => {
+    if (k==='style'&&typeof v==='object') Object.assign(el.style, v);
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2).toLowerCase(), v);
+    else if (k==='className') el.className=v;
+    else el.setAttribute(k,v);
+  });
+  children.flat().forEach(c => { if(c==null) return; el.appendChild(typeof c==='string'?document.createTextNode(c):c); });
+  return el;
+};
+
+// ── Supabase ──
+async function sbGetAll() {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/kalk_projekte?user_id=eq.${USER_ID}&order=created_at.asc`, {
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+  });
+  return await r.json();
+}
+async function sbUpsert(data) {
+  return fetch(`${SUPABASE_URL}/rest/v1/kalk_projekte`, {
+    method: 'POST',
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type':'application/json', Prefer:'resolution=merge-duplicates' },
+    body: JSON.stringify(data)
+  });
+}
+async function sbDelete(id) {
+  return fetch(`${SUPABASE_URL}/rest/v1/kalk_projekte?id=eq.${id}`, {
+    method: 'DELETE',
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+  });
+}
+
+// ── State ──
+let state = { projekte: [], selectedId: null, archivOpen: false };
+
+let syncTimer = null;
+function showSync(type, msg) {
+  const bar = document.getElementById('sync-bar');
+  bar.className = `show ${type}`;
+  bar.textContent = msg;
+  clearTimeout(syncTimer);
+  if (type==='saved') syncTimer = setTimeout(() => bar.classList.remove('show'), 2000);
+}
+
+async function loadData() {
+  showSync('saving', 'Lädt...');
+  try {
+    const rows = await sbGetAll();
+    state.projekte = rows.map(r => ({ ...r, posten: r.posten||[] }));
+    showSync('saved', 'Gespeichert ✓');
+  } catch(e) { showSync('error', 'Verbindungsfehler'); }
+  render();
+}
+
+async function saveProjekt(pr) {
+  showSync('saving', 'Speichert...');
+  try {
+    await sbUpsert({ id: pr.id, user_id: USER_ID, name: pr.name, budget: pr.budget, status: pr.status, posten: pr.posten, updated_at: new Date().toISOString() });
+    showSync('saved', 'Gespeichert ✓');
+  } catch(e) { showSync('error', 'Fehler beim Speichern'); }
+}
+
+async function createProjekt(name, budget) {
+  const id = crypto.randomUUID();
+  const pr = { id, user_id: USER_ID, name, budget, status: 'aktiv', posten: [], created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+  state.projekte.push(pr);
+  state.selectedId = id;
+  render();
+  await saveProjekt(pr);
+}
+
+async function deleteProjekt(id) {
+  state.projekte = state.projekte.filter(p=>p.id!==id);
+  state.selectedId = null;
+  render();
+  await sbDelete(id);
+}
+
+function getProjekt() { return state.projekte.find(p=>p.id===state.selectedId); }
+
+// ── Render ──
+function render() {
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+  const pr = getProjekt();
+  const aktiv = state.projekte.filter(p=>p.status!=='archiv');
+  const archiv = state.projekte.filter(p=>p.status==='archiv');
+
+  // HEADER
+  const header = h('div', { style:{ padding:'14px 16px 12px', borderBottom:'1px solid #141414' }},
+    h('div', { style:{ fontSize:'9px', letterSpacing:'0.2em', textTransform:'uppercase', color:'#333', fontFamily:'Syne,sans-serif', marginBottom:'2px' }}, 'Produktion'),
+    h('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:'8px' }},
+      h('div', { style:{ display:'flex', alignItems:'center', gap:'8px', minWidth:'0', overflow:'hidden' }},
+        pr ? h('button', { style:{ background:'#1a1a1a', border:'1px solid #252525', borderRadius:'6px', cursor:'pointer', color:'#666', fontSize:'12px', padding:'3px 8px', fontFamily:'Syne,sans-serif', fontWeight:'700', flexShrink:'0' },
+          onClick: () => { state.selectedId = null; render(); }}, '←') : null,
+        h('h1', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'17px', color:'#fff', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}, pr ? pr.name : 'Kalkulation')
+      ),
+      pr ? h('div', { style:{ display:'flex', gap:'6px', flexShrink:'0' }},
+        h('button', { style:{ background:'none', border:'1px solid #33333344', borderRadius:'6px', cursor:'pointer', color: pr.status==='archiv'?'#4ADE80':'#555', fontSize:'10px', padding:'4px 8px', fontFamily:'Syne,sans-serif', fontWeight:'700' },
+          onClick: async () => { pr.status = pr.status==='archiv'?'aktiv':'archiv'; state.selectedId=null; render(); await saveProjekt(pr); }},
+          pr.status==='archiv' ? 'Reaktivieren' : 'Archivieren'),
+        h('button', { style:{ background:'none', border:'1px solid #F8717122', borderRadius:'6px', cursor:'pointer', color:'#F87171', fontSize:'10px', padding:'4px 8px', fontFamily:'Syne,sans-serif', fontWeight:'700' },
+          onClick: () => deleteProjekt(pr.id)}, 'Löschen')
+      ) : null
+    )
+  );
+
+  const content = h('div', { style:{ padding:'12px 16px 80px' }},
+    pr ? renderDetail(pr) : renderListe(aktiv, archiv)
+  );
+
+  app.append(header, content);
+}
+
+function renderListe(aktiv, archiv) {
+  const wrap = h('div', { style:{ display:'flex', flexDirection:'column', gap:'10px' }});
+  wrap.append(h('div', { style:{ fontSize:'11px', color:'#333', marginBottom:'4px' }}, `${aktiv.length} aktive Projekte`));
+
+  aktiv.forEach(pr => {
+    const ausgaben = pr.posten.reduce((s,p)=>s+p.betrag,0);
+    const rest = pr.budget - ausgaben;
+    const progress = pct(ausgaben, pr.budget);
+    const pc = progress>=100?'#F87171':progress>=80?'#FB923C':progress>=50?'#F0E040':'#4ADE80';
+    const card = h('div', { style:{ background:'#0f0f0f', border:'1px solid #1a1a1a', borderRadius:'12px', padding:'16px', cursor:'pointer' },
+      onClick: () => { state.selectedId = pr.id; render(); }});
+    card.append(
+      h('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'12px' }},
+        h('div', {},
+          h('div', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'15px', color:'#fff', marginBottom:'3px' }}, pr.name),
+          h('div', { style:{ fontSize:'10px', color:'#383838' }}, `${pr.posten.length} Posten`)
+        ),
+        h('div', { style:{ textAlign:'right' }},
+          h('div', { style:{ fontSize:'9px', color:'#383838', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:'2px' }}, 'Budget'),
+          h('div', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'16px', color:'#E8C547' }}, fmtK(pr.budget))
+        )
+      ),
+      h('div', { style:{ height:'4px', background:'#161616', borderRadius:'99px', overflow:'hidden', marginBottom:'8px' }},
+        h('div', { style:{ height:'100%', width:`${progress}%`, background:pc, borderRadius:'99px' }})
+      ),
+      h('div', { style:{ display:'flex', justifyContent:'space-between' }},
+        h('span', { style:{ fontSize:'11px', color:'#444' }}, `Ausgaben: `, h('span', { style:{ color:'#ddd' }}, fmtK(ausgaben))),
+        h('span', { style:{ fontSize:'11px', color: rest>=0?'#4ADE80':'#F87171', fontFamily:'Syne,sans-serif', fontWeight:'700' }},
+          rest>=0 ? `${fmtK(rest)} frei` : `${fmtK(Math.abs(rest))} überzogen`)
+      )
+    );
+    wrap.append(card);
+  });
+
+  if (aktiv.length === 0) wrap.append(h('div', { style:{ padding:'20px', textAlign:'center', color:'#2e2e2e', fontSize:'12px' }}, 'Keine aktiven Projekte'));
+
+  // Neues Projekt
+  const newCard = h('div', { style:{ background:'#0a0a0a', border:'1px dashed #222', borderRadius:'12px', padding:'16px' }});
+  newCard.append(h('div', { style:{ fontSize:'9px', textTransform:'uppercase', letterSpacing:'0.1em', color:'#333', marginBottom:'10px' }}, '+ Neues Projekt'));
+  const nameIn = h('input', { placeholder:'Projektname', style:{ background:'#161616', border:'1px solid #222', borderRadius:'6px', padding:'9px 12px', color:'#ccc', fontSize:'13px', outline:'none', width:'100%', marginBottom:'8px' }});
+  const row = h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 60px', gap:'8px' }});
+  const budgetIn = h('input', { type:'number', placeholder:'Gesamtbudget €', style:{ background:'#161616', border:'1px solid #222', borderRadius:'6px', padding:'9px 12px', color:'#ccc', fontSize:'13px', outline:'none', width:'100%' }});
+  const addBtn = h('button', { style:{ background:'#E8C547', border:'none', borderRadius:'6px', cursor:'pointer', color:'#000', fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'15px' }}, '+');
+  addBtn.addEventListener('click', () => { if (!nameIn.value.trim()) return; createProjekt(nameIn.value.trim(), parseFloat(budgetIn.value)||0); });
+  row.append(budgetIn, addBtn);
+  newCard.append(nameIn, row);
+  wrap.append(newCard);
+
+  // Archiv
+  if (archiv.length > 0) {
+    const archivBtn = h('button', { style:{ display:'flex', alignItems:'center', gap:'8px', background:'none', border:'none', cursor:'pointer', padding:'8px 0', width:'100%' },
+      onClick: () => { state.archivOpen = !state.archivOpen; render(); }},
+      h('span', { style:{ fontSize:'9px', textTransform:'uppercase', letterSpacing:'0.12em', color:'#383838', fontFamily:'Syne,sans-serif', fontWeight:'700' }}, `Archiv (${archiv.length})`),
+      h('span', { style:{ color:'#333', fontSize:'12px' }}, state.archivOpen ? '▲' : '▼')
+    );
+    wrap.append(archivBtn);
+    if (state.archivOpen) {
+      archiv.forEach(pr => {
+        const ausgaben = pr.posten.reduce((s,p)=>s+p.betrag,0);
+        wrap.append(h('div', { style:{ background:'#0a0a0a', border:'1px solid #161616', borderRadius:'12px', padding:'14px 16px', cursor:'pointer', opacity:'0.7' },
+          onClick: () => { state.selectedId = pr.id; render(); }},
+          h('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center' }},
+            h('div', {},
+              h('div', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'700', fontSize:'14px', color:'#777' }}, pr.name),
+              h('div', { style:{ fontSize:'10px', color:'#333', marginTop:'2px' }}, `${pr.posten.length} Posten · ${fmtK(ausgaben)} Ausgaben`)
+            ),
+            h('div', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'14px', color:'#555' }}, fmtK(pr.budget))
+          )
+        ));
+      });
+    }
+  }
+  return wrap;
+}
+
+function renderDetail(pr) {
+  const ausgaben = pr.posten.reduce((s,p)=>s+p.betrag,0);
+  const bezahlt = pr.posten.filter(p=>p.bezahlt).reduce((s,p)=>s+p.betrag,0);
+  const offen = ausgaben - bezahlt;
+  const rest = pr.budget - ausgaben;
+  const progress = pct(ausgaben, pr.budget);
+  const pc = progress>=100?'#F87171':progress>=80?'#FB923C':progress>=50?'#F0E040':'#4ADE80';
+
+  const wrap = h('div', { style:{ display:'flex', flexDirection:'column', gap:'12px' }});
+
+  // Budget box
+  const budgetBox = h('div', { style:{ background:'#0f0f0f', border:'1px solid #1e1e1e', borderRadius:'12px', padding:'12px 14px' }});
+  const topRow = h('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'10px' }});
+  const nameIn = h('input', { value: pr.name, style:{ background:'transparent', border:'none', outline:'none', color:'#fff', fontSize:'14px', fontFamily:'Syne,sans-serif', fontWeight:'800', width:'100%' }});
+  nameIn.addEventListener('input', e => { pr.name = e.target.value; clearTimeout(syncTimer); syncTimer = setTimeout(()=>saveProjekt(pr),1000); });
+  const budgetRight = h('div', { style:{ textAlign:'right', flexShrink:'0', marginLeft:'12px' }},
+    h('div', { style:{ fontSize:'8px', textTransform:'uppercase', letterSpacing:'0.1em', color:'#383838', marginBottom:'2px' }}, 'Budget'),
+    h('div', { style:{ display:'flex', alignItems:'center', gap:'3px' }},
+      h('input', { type:'number', value: pr.budget, style:{ background:'#161616', border:'1px solid #252525', borderRadius:'6px', padding:'2px 6px', color:'#E8C547', fontSize:'15px', fontFamily:'Syne,sans-serif', fontWeight:'800', outline:'none', width:'88px', textAlign:'right' },
+        onInput: e => { pr.budget = parseFloat(e.target.value)||0; clearTimeout(syncTimer); syncTimer=setTimeout(()=>saveProjekt(pr),1000); render(); }
+      }),
+      h('span', { style:{ color:'#E8C547', fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'15px' }}, '€')
+    )
+  );
+  topRow.append(h('div', { style:{ minWidth:'0' }}, nameIn), budgetRight);
+
+  const progressBar = h('div', { style:{ height:'4px', background:'#161616', borderRadius:'99px', overflow:'hidden', marginBottom:'8px' }},
+    h('div', { style:{ height:'100%', width:`${progress}%`, background:pc, borderRadius:'99px' }})
+  );
+
+  const summGrid = h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'5px' }});
+  [
+    { label:'Budget', val:fmtK(pr.budget), color:'#E8C547' },
+    { label:'Ausgaben', val:fmtK(ausgaben), color:pc },
+    { label:'Bezahlt', val:fmtK(bezahlt), color:'#4ADE80' },
+    { label:'Noch offen', val:fmtK(offen), color: offen>0?'#FB923C':'#444' },
+  ].forEach(k => summGrid.append(
+    h('div', { style:{ background:'#0a0a0a', borderRadius:'7px', padding:'8px 10px', display:'flex', justifyContent:'space-between', alignItems:'center' }},
+      h('div', { style:{ fontSize:'9px', textTransform:'uppercase', letterSpacing:'0.08em', color:'#383838' }}, k.label),
+      h('div', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'13px', color:k.color }}, k.val)
+    )
+  ));
+
+  budgetBox.append(topRow, progressBar, summGrid);
+  wrap.append(budgetBox);
+
+  // Posten
+  const postenHeader = h('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'10px' }},
+    h('div', { style:{ fontSize:'9px', textTransform:'uppercase', letterSpacing:'0.1em', color:'#383838' }}, `Posten · ${pr.posten.length} Einträge`),
+    h('div', { style:{ fontSize:'9px', color:'#444' }},
+      h('span', { style:{ color:'#4ADE80' }}, `${pr.posten.filter(p=>p.bezahlt).length} bezahlt`),
+      ' · ',
+      h('span', { style:{ color:'#FB923C' }}, `${pr.posten.filter(p=>!p.bezahlt).length} offen`)
+    )
+  );
+
+  const postenList = h('div', { style:{ display:'flex', flexDirection:'column', gap:'6px' }});
+  pr.posten.forEach(p => {
+    const row = h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 90px 52px 28px', gap:'8px', alignItems:'center', padding:'10px 14px', background: p.bezahlt?'#0a1409':'#0d0d0d', borderRadius:'8px', border:`1px solid ${p.bezahlt?'#4ADE8020':'#1a1a1a'}` }});
+    const nameIn = h('input', { value: p.name, style:{ background:'transparent', border:'none', outline:'none', color: p.bezahlt?'#555':'#ccc', fontSize:'13px', textDecoration: p.bezahlt?'line-through':'none' }});
+    nameIn.addEventListener('input', e => { p.name = e.target.value; clearTimeout(syncTimer); syncTimer=setTimeout(()=>saveProjekt(pr),1000); });
+    const betragIn = h('input', { type:'number', value: p.betrag, style:{ background:'#161616', border:'1px solid #222', borderRadius:'5px', padding:'3px 7px', color: p.bezahlt?'#555':'#fff', fontSize:'13px', width:'100%', textAlign:'right', outline:'none' }});
+    betragIn.addEventListener('input', e => { p.betrag = parseFloat(e.target.value)||0; clearTimeout(syncTimer); syncTimer=setTimeout(()=>saveProjekt(pr),1000); render(); });
+
+    const toggle = h('div', { style:{ cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' },
+      onClick: () => { p.bezahlt = !p.bezahlt; saveProjekt(pr); render(); }},
+      h('div', { style:{ width:'36px', height:'20px', borderRadius:'99px', background: p.bezahlt?'#4ADE80':'#222', position:'relative', transition:'background .2s' }},
+        h('div', { style:{ position:'absolute', top:'3px', left: p.bezahlt?'19px':'3px', width:'14px', height:'14px', borderRadius:'50%', background: p.bezahlt?'#fff':'#555', transition:'left .2s' }})
+      )
+    );
+    const del = h('button', { style:{ background:'none', border:'none', cursor:'pointer', color:'#333', fontSize:'16px' }}, '×');
+    del.addEventListener('click', () => { pr.posten = pr.posten.filter(pp=>pp.id!==p.id); saveProjekt(pr); render(); });
+    row.append(nameIn, h('div', { style:{ display:'flex', alignItems:'center', gap:'4px' }}, betragIn, h('span', { style:{ color:'#444', fontSize:'11px' }}, '€')), toggle, del);
+    postenList.append(row);
+  });
+
+  // Neue Posten Zeile
+  const addRow = h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 90px 52px 28px', gap:'8px', alignItems:'center', padding:'8px 14px', background:'#0a0a0a', borderRadius:'8px', border:'1px dashed #222' }});
+  const newName = h('input', { placeholder:'+ Neuer Posten', style:{ background:'transparent', border:'none', outline:'none', color:'#555', fontSize:'12px' }});
+  const newBetrag = h('input', { type:'number', placeholder:'0', style:{ background:'#161616', border:'1px solid #1e1e1e', borderRadius:'5px', padding:'3px 7px', color:'#777', fontSize:'12px', width:'100%', textAlign:'right', outline:'none' }});
+  const addBtn = h('button', { style:{ background:'#E8C547', border:'none', borderRadius:'5px', cursor:'pointer', color:'#000', fontWeight:'800', fontSize:'14px', width:'28px', height:'28px', padding:'0' }}, '+');
+  addBtn.addEventListener('click', () => {
+    if (!newName.value.trim()) return;
+    pr.posten.push({ id: Date.now(), name: newName.value.trim(), betrag: parseFloat(newBetrag.value)||0, bezahlt: false });
+    newName.value = ''; newBetrag.value = '';
+    saveProjekt(pr); render();
+  });
+  addRow.append(newName, h('div', { style:{ display:'flex', alignItems:'center', gap:'4px' }}, newBetrag, h('span', { style:{ color:'#333', fontSize:'11px' }}, '€')), h('div'), addBtn);
+  postenList.append(addRow);
+
+  wrap.append(h('div', {}, postenHeader, postenList));
+  return wrap;
+}
+
+loadData();
+</script>
+</body>
+</html>
