@@ -1,0 +1,14 @@
+{
+  "name": "Roman's Finanzplaner",
+  "short_name": "Finanzplaner",
+  "description": "Freelance Finanzplaner für Roman",
+  "start_url": "/finanzplaner.html",
+  "display": "standalone",
+  "background_color": "#080808",
+  "theme_color": "#080808",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icon-finanz.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-finanz.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
