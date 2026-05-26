@@ -2,14 +2,14 @@
   "name": "Roman's Kalkulation",
   "short_name": "Kalkulation",
   "description": "Produktionskalkulation für Roman",
-  "start_url": "/roman_apps/kalkulation.html",
-  "scope": "/roman_apps/",
+  "start_url": "https://romanromacher.github.io/kalkulation.html",
+  "scope": "https://romanromacher.github.io/",
   "display": "standalone",
-  "background_color": "#080808",
-  "theme_color": "#080808",
+  "background_color": "#f5f5f3",
+  "theme_color": "#f5f5f3",
   "orientation": "portrait",
   "icons": [
-    { "src": "/roman_apps/icon-kalk.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/roman_apps/icon-kalk.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "https://romanromacher.github.io/icon-kalk.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "https://romanromacher.github.io/icon-kalk.png", "sizes": "512x512", "type": "image/png" }
   ]
 }
