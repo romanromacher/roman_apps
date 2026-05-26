@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Finanzplaner">
   <meta name="theme-color" content="#f5f5f3">
-  <link rel="manifest" href="https://romanromacher.github.io/roman_apps/manifest-finanz.json">
+  <link rel="manifest" href="manifest-finanz.json">
   <title>Finanzplaner</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
@@ -570,7 +570,7 @@ function renderKosten(kb, kp) {
     )
   ));
 
-  wrap.append(makeKostenBlock('Betriebliche Kosten', kb, '#ffffff', items => { state.kostenBetrieb = items; saveData(); render(); }));
+  wrap.append(makeKostenBlock('Betriebliche Kosten', kb, '#111', items => { state.kostenBetrieb = items; saveData(); render(); }));
 
   // MwSt summary
   const totalB = kb.reduce((s,i)=>s+i.betrag,0);
@@ -588,7 +588,7 @@ function renderKosten(kb, kp) {
     h('div', { style:{ marginTop:'8px', paddingTop:'8px', borderTop:'1px solid #eee', fontSize:'14px', color:'#111' }}, `Diese ${fmt(mwstB)} kannst du als Vorsteuer zurückfordern.`)
   ));
 
-  wrap.append(makeKostenBlock('Private Lebenshaltung', kp, '#ffffff', items => { state.kostenPrivat = items; saveData(); render(); }));
+  wrap.append(makeKostenBlock('Private Lebenshaltung', kp, '#111', items => { state.kostenPrivat = items; saveData(); render(); }));
 
   // Export / Import
   wrap.append(h('div', { style:{ background:'#fff', border:'1px solid #e0e0dc', borderRadius:'10px', padding:'16px 14px' }},
