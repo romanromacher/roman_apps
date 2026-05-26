@@ -9,14 +9,14 @@
   <meta name="theme-color" content="#f5f5f3">
   <link rel="manifest" href="manifest-kalk.json">
   <title>Kalkulation</title>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #f5f5f3; color: #ffffff; font-family: 'DM Sans', sans-serif; min-height: 100vh; overscroll-behavior: none; }
+    body { background: #f5f5f3; color: #ffffff; font-family: 'Inter', sans-serif; min-height: 100vh; overscroll-behavior: none; }
     input, select, button { font-family: inherit; }
     input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
     #app { max-width: 720px; margin: 0 auto; }
-    #sync-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; text-align: center; font-size: 11px; padding: 6px; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 0.1em; transition: all .3s; transform: translateY(-100%); }
+    #sync-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; text-align: center; font-size: 11px; padding: 6px; font-family: 'Inter', sans-serif; font-weight: 700; letter-spacing: 0.1em; transition: all .3s; transform: translateY(-100%); }
     #sync-bar.show { transform: translateY(0); }
     #sync-bar.saving { background: #f0f0ee; color: #bbb; }
     #sync-bar.saved { background: #e6f9ef; color: #00C853; }
@@ -137,21 +137,20 @@ function render() {
   const archiv = state.projekte.filter(p=>p.status==='archiv');
 
   // HEADER
-  const header = h('div', { style:{ padding:'14px 16px 12px', borderBottom:'1px solid #141414' }},
-    h('div', { style:{ fontSize:'15px', letterSpacing:'0.2em', textTransform:'uppercase', color:'#111', fontFamily:'Syne,sans-serif', marginBottom:'2px' }}, 'Produktion'),
+  const header = h('div', { style:{ padding:'14px 16px 12px', borderBottom:'1px solid #e0e0dc', background:'#f5f5f3' }},
+    h('div', { style:{ fontSize:'15px', letterSpacing:'0.2em', textTransform:'uppercase', color:'#111', fontFamily:'Inter,sans-serif', marginBottom:'2px' }}, 'Produktion'),
     h('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:'8px' }},
       h('div', { style:{ display:'flex', alignItems:'center', gap:'8px', minWidth:'0', overflow:'hidden' }},
-        pr ? h('button', { style:{ background:'#e5e5e5', border:'1px solid #ddd', borderRadius:'6px', cursor:'pointer', color:'#111', fontSize:'15px', padding:'3px 8px', fontFamily:'Syne,sans-serif', fontWeight:'700', flexShrink:'0' },
+        pr ? h('button', { style:{ background:'#e5e5e5', border:'1px solid #ddd', borderRadius:'6px', cursor:'pointer', color:'#111', fontSize:'15px', padding:'3px 8px', fontFamily:'Inter,sans-serif', fontWeight:'700', flexShrink:'0' },
           onClick: () => { state.selectedId = null; render(); }}, '←') : null,
-        h('h1', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'17px', color:'#111', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}, pr ? pr.name : 'Kalkulation')
+        h('h1', { style:{ fontFamily:'Inter,sans-serif', fontWeight:'800', fontSize:'17px', color:'#111', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}, pr ? pr.name : 'Kalkulation')
       ),
       pr ? h('div', { style:{ display:'flex', gap:'6px', flexShrink:'0' }},
-        h('button', { style:{ background:'none', border:'1px solid #aaa33344', borderRadius:'6px', cursor:'pointer', color: pr.status==='archiv'?'#00C853':'#ccc', fontSize:'16px', padding:'4px 8px', fontFamily:'Syne,sans-serif', fontWeight:'700' },
+        h('button', { style:{ background:'none', border:'1px solid #aaa33344', borderRadius:'6px', cursor:'pointer', color: pr.status==='archiv'?'#00C853':'#555', fontSize:'14px', padding:'4px 8px', fontFamily:'Inter,sans-serif', fontWeight:'700' },
           onClick: async () => { pr.status = pr.status==='archiv'?'aktiv':'archiv'; state.selectedId=null; render(); await saveProjekt(pr); }},
           pr.status==='archiv' ? 'Reaktivieren' : 'Archivieren'),
-        h('button', { style:{ background:'none', border:'1px solid #E8000D22', borderRadius:'6px', cursor:'pointer', color:'#E8000D', fontSize:'16px', padding:'4px 8px', fontFamily:'Syne,sans-serif', fontWeight:'700' },
-          onClick: () => deleteProjekt(pr.id)}, 'Löschen'),
-        h('button', { style:{ background:'#F5A800', border:'none', borderRadius:'6px', cursor:'pointer', color:'#000', fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'16px', padding:'4px 10px' }, onClick: () => saveProjekt(pr)}, '💾')
+        h('button', { style:{ background:'none', border:'1px solid #E8000D22', borderRadius:'6px', cursor:'pointer', color:'#E8000D', fontSize:'14px', padding:'4px 8px', fontFamily:'Inter,sans-serif', fontWeight:'700' },
+          onClick: () => deleteProjekt(pr.id)}, 'Löschen')
       ) : null
     )
   );
@@ -177,12 +176,12 @@ function renderListe(aktiv, archiv) {
     card.append(
       h('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'12px' }},
         h('div', {},
-          h('div', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'15px', color:'#111', marginBottom:'3px' }}, pr.name),
+          h('div', { style:{ fontFamily:'Inter,sans-serif', fontWeight:'800', fontSize:'15px', color:'#111', marginBottom:'3px' }}, pr.name),
           h('div', { style:{ fontSize:'16px', color:'#888888' }}, `${pr.posten.length} Posten`)
         ),
         h('div', { style:{ textAlign:'right' }},
-          h('div', { style:{ fontSize:'15px', color:'#888888', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:'2px' }}, 'Budget'),
-          h('div', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'16px', color:'#F5A800' }}, fmtK(pr.budget))
+          h('div', { style:{ fontSize:'15px', color:'#888888', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:'2px' }}, 'Gesamtbudget'),
+          h('div', { style:{ fontFamily:'Inter,sans-serif', fontWeight:'800', fontSize:'16px', color:'#F5A800' }}, fmtK(pr.budget))
         )
       ),
       h('div', { style:{ height:'4px', background:'#ebebeb', borderRadius:'99px', overflow:'hidden', marginBottom:'8px' }},
@@ -190,7 +189,7 @@ function renderListe(aktiv, archiv) {
       ),
       h('div', { style:{ display:'flex', justifyContent:'space-between' }},
         h('span', { style:{ fontSize:'16px', color:'#111' }}, `Ausgaben: `, h('span', { style:{ color:'#111' }}, fmtK(ausgaben))),
-        h('span', { style:{ fontSize:'16px', color: rest>=0?'#00C853':'#E8000D', fontFamily:'Syne,sans-serif', fontWeight:'700' }},
+        h('span', { style:{ fontSize:'16px', color: rest>=0?'#00C853':'#E8000D', fontFamily:'Inter,sans-serif', fontWeight:'700' }},
           rest>=0 ? `${fmtK(rest)} frei` : `${fmtK(Math.abs(rest))} überzogen`)
       )
     );
@@ -205,7 +204,7 @@ function renderListe(aktiv, archiv) {
   const nameIn = h('input', { placeholder:'Projektname', style:{ background:'#ebebeb', border:'1px solid #ddd', borderRadius:'6px', padding:'9px 12px', color:'#111', fontSize:'15px', outline:'none', width:'100%', marginBottom:'8px' }});
   const row = h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 60px', gap:'8px' }});
   const budgetIn = h('input', { type:'number', placeholder:'Gesamtbudget €', style:{ background:'#ebebeb', border:'1px solid #ddd', borderRadius:'6px', padding:'9px 12px', color:'#111', fontSize:'15px', outline:'none', width:'100%' }});
-  const addBtn = h('button', { style:{ background:'#F5A800', border:'none', borderRadius:'6px', cursor:'pointer', color:'#000', fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'15px' }}, '+');
+  const addBtn = h('button', { style:{ background:'#F5A800', border:'none', borderRadius:'6px', cursor:'pointer', color:'#000', fontFamily:'Inter,sans-serif', fontWeight:'800', fontSize:'15px' }}, '+');
   addBtn.addEventListener('click', () => { if (!nameIn.value.trim()) return; createProjekt(nameIn.value.trim(), parseFloat(budgetIn.value)||0); });
   row.append(budgetIn, addBtn);
   newCard.append(nameIn, row);
@@ -215,7 +214,7 @@ function renderListe(aktiv, archiv) {
   if (archiv.length > 0) {
     const archivBtn = h('button', { style:{ display:'flex', alignItems:'center', gap:'8px', background:'none', border:'none', cursor:'pointer', padding:'8px 0', width:'100%' },
       onClick: () => { state.archivOpen = !state.archivOpen; render(); }},
-      h('span', { style:{ fontSize:'15px', textTransform:'uppercase', letterSpacing:'0.12em', color:'#888888', fontFamily:'Syne,sans-serif', fontWeight:'700' }}, `Archiv (${archiv.length})`),
+      h('span', { style:{ fontSize:'15px', textTransform:'uppercase', letterSpacing:'0.12em', color:'#888888', fontFamily:'Inter,sans-serif', fontWeight:'700' }}, `Archiv (${archiv.length})`),
       h('span', { style:{ color:'#111', fontSize:'15px' }}, state.archivOpen ? '▲' : '▼')
     );
     wrap.append(archivBtn);
@@ -226,15 +225,32 @@ function renderListe(aktiv, archiv) {
           onClick: () => { state.selectedId = pr.id; render(); }},
           h('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center' }},
             h('div', {},
-              h('div', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'700', fontSize:'16px', color:'#111' }}, pr.name),
+              h('div', { style:{ fontFamily:'Inter,sans-serif', fontWeight:'700', fontSize:'16px', color:'#111' }}, pr.name),
               h('div', { style:{ fontSize:'16px', color:'#111', marginTop:'2px' }}, `${pr.posten.length} Posten · ${fmtK(ausgaben)} Ausgaben`)
             ),
-            h('div', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'16px', color:'#111' }}, fmtK(pr.budget))
+            h('div', { style:{ fontFamily:'Inter,sans-serif', fontWeight:'800', fontSize:'16px', color:'#111' }}, fmtK(pr.budget))
           )
         ));
       });
     }
   }
+
+  // Export / Import
+  wrap.append(h('div', { style:{ background:'#fff', border:'1px solid #e0e0dc', borderRadius:'10px', padding:'16px 14px' }},
+    h('div', { style:{ fontSize:'13px', textTransform:'uppercase', letterSpacing:'0.06em', color:'#888', marginBottom:'12px' }}, 'Datensicherung'),
+    h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px' }},
+      h('button', { style:{ background:'#111', border:'none', borderRadius:'8px', cursor:'pointer', color:'#fff', fontFamily:'Inter,sans-serif', fontWeight:'700', fontSize:'14px', padding:'12px', textAlign:'center' },
+        onClick: () => exportData()
+      }, '⬇ Export JSON'),
+      h('label', { style:{ background:'#f5f5f3', border:'1px solid #ddd', borderRadius:'8px', cursor:'pointer', color:'#111', fontFamily:'Inter,sans-serif', fontWeight:'700', fontSize:'14px', padding:'12px', textAlign:'center', display:'block' }},
+        '⬆ Import JSON',
+        h('input', { type:'file', accept:'.json', style:{ display:'none' },
+          onChange: e => { if (e.target.files[0]) importData(e.target.files[0]); }
+        })
+      )
+    )
+  ));
+
   return wrap;
 }
 
@@ -251,33 +267,36 @@ function renderDetail(pr) {
   // Budget box
   const budgetBox = h('div', { style:{ background:'#ffffff', border:'1px solid #e0e0dc', borderRadius:'12px', padding:'12px 14px' }});
   const topRow = h('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'10px' }});
-  const nameIn = h('input', { value: pr.name, style:{ background:'transparent', border:'none', outline:'none', color:'#111', fontSize:'16px', fontFamily:'Syne,sans-serif', fontWeight:'800', width:'100%' }});
+  const nameIn = h('input', { value: pr.name, style:{ background:'transparent', border:'none', outline:'none', color:'#111', fontSize:'16px', fontFamily:'Inter,sans-serif', fontWeight:'800', width:'100%' }});
   nameIn.addEventListener('input', e => { pr.name = e.target.value; clearTimeout(syncTimer); syncTimer=setTimeout(()=>saveProjekt(pr),0); });
   const budgetRight = h('div', { style:{ textAlign:'right', flexShrink:'0', marginLeft:'12px' }},
-    h('div', { style:{ fontSize:'15px', textTransform:'uppercase', letterSpacing:'0.1em', color:'#888888', marginBottom:'2px' }}, 'Budget'),
+    h('div', { style:{ fontSize:'15px', textTransform:'uppercase', letterSpacing:'0.1em', color:'#888888', marginBottom:'2px' }}, 'Gesamtbudget'),
     h('div', { style:{ display:'flex', alignItems:'center', gap:'3px' }},
-      h('input', { type:'number', value: pr.budget, style:{ background:'#ebebeb', border:'1px solid #ddd', borderRadius:'6px', padding:'2px 6px', color:'#F5A800', fontSize:'15px', fontFamily:'Syne,sans-serif', fontWeight:'800', outline:'none', width:'88px', textAlign:'right' },
+      h('input', { type:'number', value: pr.budget, style:{ background:'#ebebeb', border:'1px solid #ddd', borderRadius:'6px', padding:'2px 6px', color:'#F5A800', fontSize:'15px', fontFamily:'Inter,sans-serif', fontWeight:'800', outline:'none', width:'88px', textAlign:'right' },
         onInput: e => { pr.budget = parseFloat(e.target.value)||0; clearTimeout(syncTimer); syncTimer=setTimeout(()=>saveProjekt(pr),0); render(); }
       }),
-      h('span', { style:{ color:'#F5A800', fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'15px' }}, '€')
+      h('span', { style:{ color:'#F5A800', fontFamily:'Inter,sans-serif', fontWeight:'800', fontSize:'15px' }}, '€')
     )
   );
   topRow.append(h('div', { style:{ minWidth:'0' }}, nameIn), budgetRight);
 
   const progressBar = h('div', { style:{ height:'4px', background:'#ebebeb', borderRadius:'99px', overflow:'hidden', marginBottom:'8px' }},
-    h('div', { style:{ height:'100%', width:`${progress}%`, background:pc, borderRadius:'99px' }})
+    h('div', { style:{ height:'100%', width:`${Math.min(100, progress)}%`, background:pc, borderRadius:'99px' }})
   );
+
+  const restBetrag = pr.budget - ausgaben;
+  const restColor = restBetrag >= 0 ? '#00C853' : '#E8000D';
 
   const summGrid = h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'5px' }});
   [
-    { label:'Budget', val:fmtK(pr.budget), color:'#F5A800' },
+    { label:'Budget', val: (restBetrag < 0 ? '− ' : '') + fmtK(Math.abs(restBetrag)), color: restColor },
     { label:'Ausgaben', val:fmtK(ausgaben), color:pc },
     { label:'Bezahlt', val:fmtK(bezahlt), color:'#00C853' },
-    { label:'Noch offen', val:fmtK(offen), color: offen>0?'#F5A800':'#bbb' },
+    { label:'Noch offen (unbezahlt)', val:fmtK(offen), color: offen>0?'#F5A800':'#888' },
   ].forEach(k => summGrid.append(
     h('div', { style:{ background:'#f0f0ee', borderRadius:'7px', padding:'8px 10px', display:'flex', justifyContent:'space-between', alignItems:'center' }},
       h('div', { style:{ fontSize:'15px', textTransform:'uppercase', letterSpacing:'0.08em', color:'#888888' }}, k.label),
-      h('div', { style:{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'15px', color:k.color }}, k.val)
+      h('div', { style:{ fontFamily:'Inter,sans-serif', fontWeight:'800', fontSize:'15px', color:k.color }}, k.val)
     )
   ));
 
@@ -296,40 +315,98 @@ function renderDetail(pr) {
 
   const postenList = h('div', { style:{ display:'flex', flexDirection:'column', gap:'6px' }});
   pr.posten.forEach(p => {
-    const row = h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 90px 52px 28px', gap:'8px', alignItems:'center', padding:'10px 14px', background: p.bezahlt?'#0a1409':'#0d0d0d', borderRadius:'8px', border:`1px solid ${p.bezahlt?'#00C85320':'#1a1a1a'}` }});
-    const nameIn = h('input', { value: p.name, style:{ background:'transparent', border:'none', outline:'none', color: p.bezahlt?'#ccc':'#ccc', fontSize:'15px', textDecoration: p.bezahlt?'line-through':'none' }});
-    nameIn.addEventListener('input', e => { p.name = e.target.value; clearTimeout(syncTimer); syncTimer=setTimeout(()=>saveProjekt(pr),0); });
-    const betragIn = h('input', { type:'number', value: p.betrag, style:{ background:'#ebebeb', border:'1px solid #ddd', borderRadius:'5px', padding:'3px 7px', color: p.bezahlt?'#ccc':'#fff', fontSize:'15px', width:'100%', textAlign:'right', outline:'none' }});
+    const borderColor = p.bezahlt ? '#00C85330' : '#e0e0dc';
+    const bgColor = p.bezahlt ? '#e6f9ef' : '#ffffff';
+    const row = h('div', { style:{ display:'flex', flexDirection:'column', gap:'8px', padding:'10px 12px', background: bgColor, borderRadius:'8px', border:'1px solid ' + borderColor }});
+
+    const nameIn = document.createElement('textarea');
+    nameIn.value = p.name;
+    nameIn.rows = 1;
+    Object.assign(nameIn.style, { background:'transparent', border:'none', outline:'none', color: p.bezahlt?'#888':'#111', fontSize:'15px', textDecoration: p.bezahlt?'line-through':'none', width:'100%', resize:'none', fontFamily:'Inter,sans-serif', overflow:'hidden', lineHeight:'1.4', padding:'0', fontWeight:'500' });
+    nameIn.addEventListener('input', e => {
+      e.target.style.height = 'auto';
+      e.target.style.height = e.target.scrollHeight + 'px';
+      p.name = e.target.value;
+      clearTimeout(syncTimer); syncTimer=setTimeout(()=>saveProjekt(pr),0);
+    });
+    setTimeout(() => { nameIn.style.height = 'auto'; nameIn.style.height = nameIn.scrollHeight + 'px'; }, 0);
+
+    const bottomRow = h('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center' }});
+    const betragIn = h('input', { type:'number', value: p.betrag, style:{ background:'#f5f5f3', border:'1px solid #ddd', borderRadius:'5px', padding:'3px 7px', color: p.bezahlt?'#888':'#111', fontSize:'15px', width:'90px', textAlign:'right', outline:'none' }});
     betragIn.addEventListener('input', e => { p.betrag = parseFloat(e.target.value)||0; clearTimeout(syncTimer); syncTimer=setTimeout(()=>saveProjekt(pr),0); render(); });
 
-    const toggle = h('div', { style:{ cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' },
+    const toggle = h('div', { style:{ cursor:'pointer', display:'flex', alignItems:'center', gap:'6px' },
       onClick: () => { p.bezahlt = !p.bezahlt; saveProjekt(pr); render(); }},
-      h('div', { style:{ width:'36px', height:'20px', borderRadius:'99px', background: p.bezahlt?'#00C853':'#222', position:'relative', transition:'background .2s' }},
-        h('div', { style:{ position:'absolute', top:'3px', left: p.bezahlt?'19px':'3px', width:'14px', height:'14px', borderRadius:'50%', background: p.bezahlt?'#fff':'#ccc', transition:'left .2s' }})
-      )
+      h('div', { style:{ width:'36px', height:'20px', borderRadius:'99px', background: p.bezahlt?'#00C853':'#ddd', position:'relative', transition:'background .2s', flexShrink:'0' }},
+        h('div', { style:{ position:'absolute', top:'3px', left: p.bezahlt?'19px':'3px', width:'14px', height:'14px', borderRadius:'50%', background:'#fff', transition:'left .2s' }})
+      ),
+      h('span', { style:{ fontSize:'13px', color: p.bezahlt?'#00C853':'#888', fontFamily:'Inter,sans-serif', fontWeight:'600' }}, p.bezahlt?'Bezahlt':'Offen')
     );
-    const del = h('button', { style:{ background:'none', border:'none', cursor:'pointer', color:'#111', fontSize:'16px' }}, '×');
+
+    const del = h('button', { style:{ background:'none', border:'none', cursor:'pointer', color:'#ccc', fontSize:'18px', padding:'0' }}, '×');
     del.addEventListener('click', () => { pr.posten = pr.posten.filter(pp=>pp.id!==p.id); saveProjekt(pr); render(); });
-    row.append(nameIn, h('div', { style:{ display:'flex', alignItems:'center', gap:'4px' }}, betragIn, h('span', { style:{ color:'#111', fontSize:'16px' }}, '€')), toggle, del);
+
+    const betragWrap = h('div', { style:{ display:'flex', alignItems:'center', gap:'6px' }},
+      h('span', { style:{ color:'#888', fontSize:'13px' }}, '€'),
+      betragIn
+    );
+    bottomRow.append(betragWrap, toggle, del);
+    row.append(nameIn, bottomRow);
     postenList.append(row);
   });
 
   // Neue Posten Zeile
-  const addRow = h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 90px 52px 28px', gap:'8px', alignItems:'center', padding:'8px 14px', background:'#f0f0ee', borderRadius:'8px', border:'1px dashed #ccc' }});
-  const newName = h('input', { placeholder:'+ Neuer Posten', style:{ background:'transparent', border:'none', outline:'none', color:'#111', fontSize:'15px' }});
-  const newBetrag = h('input', { type:'number', placeholder:'0', style:{ background:'#ebebeb', border:'1px solid #e0e0dc', borderRadius:'5px', padding:'3px 7px', color:'#111', fontSize:'15px', width:'100%', textAlign:'right', outline:'none' }});
-  const addBtn = h('button', { style:{ background:'#F5A800', border:'none', borderRadius:'5px', cursor:'pointer', color:'#000', fontWeight:'800', fontSize:'16px', width:'28px', height:'28px', padding:'0' }}, '+');
+  const addRow = h('div', { style:{ display:'flex', flexDirection:'column', gap:'8px', padding:'10px 12px', background:'#f0f0ee', borderRadius:'8px', border:'1px dashed #ccc' }});
+  const newName = h('input', { placeholder:'+ Neuer Posten', style:{ background:'transparent', border:'none', outline:'none', color:'#111', fontSize:'15px', fontFamily:'Inter,sans-serif', width:'100%' }});
+  const newBottomRow = h('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center' }});
+  const newBetrag = h('input', { type:'number', placeholder:'0', style:{ background:'#fff', border:'1px solid #ddd', borderRadius:'5px', padding:'3px 7px', color:'#111', fontSize:'15px', width:'90px', textAlign:'right', outline:'none' }});
+  const addBtn = h('button', { style:{ background:'#F5A800', border:'none', borderRadius:'6px', cursor:'pointer', color:'#000', fontWeight:'800', fontSize:'15px', padding:'5px 16px', fontFamily:'Inter,sans-serif' }}, '+ Hinzufügen');
   addBtn.addEventListener('click', () => {
     if (!newName.value.trim()) return;
     pr.posten.push({ id: Date.now(), name: newName.value.trim(), betrag: parseFloat(newBetrag.value)||0, bezahlt: false });
     newName.value = ''; newBetrag.value = '';
     saveProjekt(pr); render();
   });
-  addRow.append(newName, h('div', { style:{ display:'flex', alignItems:'center', gap:'4px' }}, newBetrag, h('span', { style:{ color:'#111', fontSize:'16px' }}, '€')), h('div'), addBtn);
+  newBottomRow.append(
+    h('div', { style:{ display:'flex', alignItems:'center', gap:'6px' }}, h('span', { style:{ color:'#888', fontSize:'13px' }}, '€'), newBetrag),
+    addBtn
+  );
+  addRow.append(newName, newBottomRow);
   postenList.append(addRow);
 
   wrap.append(h('div', {}, postenHeader, postenList));
   return wrap;
+}
+
+
+function exportData() {
+  const data = {
+    exportDatum: new Date().toISOString(),
+    projekte: state.projekte,
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `romans-kalkulation-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.projekte) {
+        state.projekte = data.projekte;
+        data.projekte.forEach(pr => sbUpsert(pr));
+      }
+      render();
+      alert('Import erfolgreich ✓');
+    } catch(e) { alert('Fehler beim Import — ungültige Datei'); }
+  };
+  reader.readAsText(file);
 }
 
 loadData();
