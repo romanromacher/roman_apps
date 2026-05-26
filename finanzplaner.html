@@ -45,7 +45,7 @@ const NOW_YEAR = 2026;
 const NOW_MONTH = 4;
 const MONATE = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
 const MONATE_LANG = ["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
-
+ 
 // ── Supabase helpers ──
 async function sbGet(table, filter) {
   const url = `${SUPABASE_URL}/rest/v1/${table}?${filter}&limit=1&apikey=${SUPABASE_KEY}`;
